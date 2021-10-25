@@ -1,6 +1,10 @@
 venv
 .env
+
+logs
 state.json
 *.zip
+
 info.txt
+
 *.pem
