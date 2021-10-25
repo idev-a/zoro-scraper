@@ -42,30 +42,30 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 # remove log file
-# LOG_DIR = BASE_PATH + '/logs/'
-# LOG_FILE = LOG_DIR + 'processing.log'
+LOG_DIR = os.path.abspath(os.curdir) + '/logs/'
+LOG_FILE = LOG_DIR + 'processing.log'
 
-# if os.path.exists(LOG_DIR):
-#     shutil.rmtree(LOG_DIR)
+if os.path.exists(LOG_DIR):
+    shutil.rmtree(LOG_DIR)
 
-# if not os.path.exists(LOG_DIR):
-#     os.makedirs(LOG_DIR)
+if not os.path.exists(LOG_DIR):
+    os.makedirs(LOG_DIR)
 
 # Create handlers
 c_handler = logging.StreamHandler()
-# f_handler = RotatingFileHandler(LOG_FILE, maxBytes=20000, backupCount=10)
+f_handler = RotatingFileHandler(LOG_FILE, maxBytes=20000, backupCount=10)
 c_handler.setLevel(logging.INFO)
-# f_handler.setLevel(logging.WARNING)
+f_handler.setLevel(logging.WARNING)
 
 # Create formatters and add it to handlers
 c_format = logging.Formatter('[%(levelname)s] %(message)s')
-# f_format = logging.Formatter('%(asctime)s [%(levelname)s] %(message)s')
+f_format = logging.Formatter('%(asctime)s [%(levelname)s] %(message)s')
 c_handler.setFormatter(c_format)
-# f_handler.setFormatter(f_format)
+f_handler.setFormatter(f_format)
 
 # Add handlers to the logger
 logger.addHandler(c_handler)
-# logger.addHandler(f_handler)
+logger.addHandler(f_handler)
 
 base_url = "https://www.zoro.com"
 prod_url = "https://www.zoro.com/product/?products={}"
@@ -249,6 +249,7 @@ class Script:
 
                 except Exception as err:
                     time.sleep(1)
+                    logger.warn(str(err))
                     pass
             break
 
@@ -256,6 +257,7 @@ if __name__ == '__main__':
     with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.ITEM_URL})), data_file=ZORO_PATH, s3=s3) as writer:
         script = Script()
         script.initialize()
+        logger.warn('str(err)')
         results = script.fetch_zoro_data()
         for rec in results:
             writer.write_row(rec)
