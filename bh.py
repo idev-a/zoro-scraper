@@ -82,10 +82,9 @@ class Script:
         logger.info("load old list files inside /old_list dir")
 
         self.old_pds = []
-        old_list_bucket = s3.Bucket(OLD_LIST_BUCKET)
-        for file in old_list_bucket.objects.all():
-            logger.info(f"load old list {file.key}")
-            obj = s3.get_object(Bucket=s3_bucket_name, Key=file.key)
+        for file in s3.list_objects(Bucket=OLD_LIST_BUCKET)['Contents']:
+            logger.info(f"load old list {file['Key']}")
+            obj = s3.get_object(Bucket=OLD_LIST_BUCKET, Key=file['Key'])
             self.old_pds.append(pd.read_excel(BytesIO(obj.get('Body').read()), sheet_name='RESULTS_FULL', usecols=['Manufacturer Part Number']) )
 
         # read files from local
