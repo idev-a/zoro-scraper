@@ -16,10 +16,10 @@ import boto3
 from io import BytesIO
 from util.util import Util
 import time
+import argparse
 
 # BASE_PATH = os.path.abspath(os.curdir)
 BASE_PATH = '/tmp'
-ZORO_PATH = BASE_PATH + '/ZORO_SCRAPE.xlsx'
 BH_PATH = BASE_PATH + '/BH_SCRAPE.xlsx'
 # OLD_LIST_PATH = BASE_PATH + '/old_list'
 # BREAKER_LIST_PATH = BASE_PATH + '/BREAKER LIST 2021 with new columns.xlsx'
@@ -82,23 +82,15 @@ class Script:
         logger.info("load old list files inside /old_list dir")
 
         self.old_pds = []
-        for file in s3.list_objects(Bucket=OLD_LIST_BUCKET)['Contents']:
-            logger.info(f"load old list {file['Key']}")
-            obj = s3.get_object(Bucket=OLD_LIST_BUCKET, Key=file['Key'])
-            self.old_pds.append(pd.read_excel(BytesIO(obj.get('Body').read()), sheet_name='RESULTS_FULL', usecols=['Manufacturer Part Number']) )
-
-        # read files from local
-        # self.old_pds = []
-        # for root, directories, files in os.walk(OLD_LIST_PATH, topdown=False):
-        #     for name in files:
-        #         logger.info(f"load old list {name}")
-        #         old_path = os.path.join(root, name)
-        #         self.old_pds.append(pd.read_excel(open(old_path, 'rb'), sheet_name='RESULTS_FULL', usecols=['Manufacturer Part Number']) )
+        # for file in s3.list_objects(Bucket=OLD_LIST_BUCKET)['Contents']:
+        #     logger.info(f"load old list {file['Key']}")
+        #     obj = s3.get_object(Bucket=OLD_LIST_BUCKET, Key=file['Key'])
+        #     self.old_pds.append(pd.read_excel(BytesIO(obj.get('Body').read()), sheet_name='RESULTS_FULL', usecols=['Manufacturer Part Number']) )
 
         # load breaker list
         logger.info("load breaker list")
-        breaker_list_obj = s3.get_object(Bucket=OTHER_LIST_BUCKET, Key='BREAKER LIST 2021 with new columns.xlsx')
-        self.breaker_pd = pd.read_excel(BytesIO(breaker_list_obj.get('Body').read()), usecols=[1])
+        # breaker_list_obj = s3.get_object(Bucket=OTHER_LIST_BUCKET, Key='BREAKER LIST 2021 with new columns.xlsx')
+        # self.breaker_pd = pd.read_excel(BytesIO(breaker_list_obj.get('Body').read()), usecols=[1])
         
 
     def _headers(self):
@@ -142,6 +134,7 @@ class Script:
         '''
             check if the mf_number is in the old list (1-12)
         '''
+        return False
         for old_pd in self.old_pds:
             if len(old_pd[old_pd.eq(mf_number).any(1)]) > 1:
                 return True
@@ -153,6 +146,7 @@ class Script:
         '''
             check if the mf_number is in the breaker list
         '''
+        return False
         return len(self.breaker_pd[self.breaker_pd.eq(mf_number).any(1)]) > 1
 
 
@@ -218,19 +212,21 @@ class Script:
             on_old_list=self._check_old_list(mf_number)
         )
 
-    def fetch_zoro_data(self):
+    def fetch_zoro_data(self, cat_idx=0):
         categories = self.request_with_retries(base_url).select('div.mega-menu > div.mega-menu__grid div.mega-menu__grid-item a.mega-menu__level1')
         logger.info(f"Total {len(categories)} categories")
         # for cat_url, cat in self.fetchList(categories):
-        for link in categories:
+        for x, link in enumerate(categories):
+            if x != cat_idx:
+                continue
             cat_url = self._url(link)
             cat = self.request_with_retries(cat_url)
             sub_categories = cat.select('ul.c-sidebar-nav__list li a')
-            # for sub_url, sub_cat in fetchList(sub_categories):
-            for sub_link in sub_categories:
+            for sub_url, sub_cat in self.fetchList(sub_categories):
+            # for sub_link in sub_categories:
                 try:
-                    sub_url = self._url(sub_link)
-                    sub_cat = self.request_with_retries(sub_url)
+                    # sub_url = self._url(sub_link)
+                    # sub_cat = self.request_with_retries(sub_url)
                     pages = sub_cat.select('section.search__results__footer div.v-select-list a')
                     items = sub_cat.select('div.search-results__result div.product-card-container')
                     logger.info(f"[{len(items)}] {sub_url}")
@@ -254,10 +250,15 @@ class Script:
             break
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-i', '--index', type=str, required=False, help="the name of childscraper. e.g, ganjapreneur from https://www.ganjapreneur.com/businesses/  complete example: python3 dirscraper.py -k ganjapreneur")
+
+    script = Script()
+    cat_idx = parser.parse_args().index or 0
+    logger.info(f"{cat_idx}st Category scraper")
+    ZORO_PATH = BASE_PATH + f'/ZORO_SCRAPE_Category_{cat_idx}.xlsx'
     with SgWriter(SgRecordDeduper(SgRecordID({SgRecord.Headers.ITEM_URL})), data_file=ZORO_PATH, s3=s3) as writer:
-        script = Script()
         script.initialize()
-        logger.warn('str(err)')
-        results = script.fetch_zoro_data()
+        results = script.fetch_zoro_data(cat_idx=cat_idx)
         for rec in results:
             writer.write_row(rec)
