@@ -217,7 +217,7 @@ class Script:
         logger.info(f"Total {len(categories)} categories")
         # for cat_url, cat in self.fetchList(categories):
         for x, link in enumerate(categories):
-            if x != cat_idx:
+            if x != int(cat_idx):
                 continue
             cat_url = self._url(link)
             cat = self.request_with_retries(cat_url)
