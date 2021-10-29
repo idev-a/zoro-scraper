@@ -188,6 +188,8 @@ class Script:
         ss = ss[0]
 
         category_path = [ii.text.strip() for ii in sp1.select('nav.zcl-breadcrumb li span[itemprop="name"]')][1:]
+        if not category_path:
+            category_path = [ii.text.strip() for ii in sp1.select('nav.zcl-breadcrumb li span[itemprop="name"]')]
         mf_number=sp1.select_one('span[data-za="PDPMfrNo"]').text.strip()
         width=self._spec(sp1, 'Width')
         height=self._spec(sp1, 'Height')
@@ -245,6 +247,7 @@ class Script:
 
                 except Exception as err:
                     time.sleep(1)
+                    logger.warn(link['href'])
                     logger.warn(str(err))
                     pass
             break

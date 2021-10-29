@@ -77,7 +77,7 @@ class SgRequestsBase:
         :param dont_retry_status_codes: [SgRequestsAsync.DEFAULT_DONT_RETRY_STATUS_CODES] Skip retries for these status codes.
         :param dont_retry_status_codes_exceptions: Exceptions to `dont_retry_status_codes`. Defaults to an empty set.
         """
-        self.__behind_proxy: bool = True
+        self.__behind_proxy: bool = False
         self.__proxy_country = proxy_country
         self.__dont_retry_status_codes = set.difference(set(dont_retry_status_codes),
                                                         set(dont_retry_status_codes_exceptions))
