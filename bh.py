@@ -28,6 +28,8 @@ BH_PATH = BASE_PATH + '/BH_SCRAPE.xlsx'
 OLD_LIST_BUCKET = 'oldlist'
 OTHER_LIST_BUCKET = 'otherlist'
 ZORO_RESULTS_BUCKET = 'zoro-results'
+MASTER_BUCKET = 'jo-masters'
+ZORO_MASTER = BASE_PATH + '/zoro-master.xlsx'
 
 AWS_ACCESS_KEY_ID = "AKIATLGDYHYDHKCHCF67"
 AWS_SECURITY_KEY = "6DVWj1RdfXuTUxeQVamLhuuJCG6JDPW4CF+oUZFV"
@@ -91,7 +93,43 @@ class Script:
         logger.info("load breaker list")
         # breaker_list_obj = s3.get_object(Bucket=OTHER_LIST_BUCKET, Key='BREAKER LIST 2021 with new columns.xlsx')
         # self.breaker_pd = pd.read_excel(BytesIO(breaker_list_obj.get('Body').read()), usecols=[1])
+
+    def _save_master_excel(self):
+        '''
+            save master excel file
+        '''
+
+        # master excel file containing all the data
+        df_list = []
+
+        for file in s3.list_objects(Bucket=ZORO_RESULTS_BUCKET)['Contents']:
+            logger.info(f"[master] load old list {file['Key']}")
+            obj = s3.get_object(Bucket=ZORO_RESULTS_BUCKET, Key=file['Key'])
+            df_list.append(pd.read_excel(BytesIO(obj.get('Body').read()), sheet_name='Sheet'))
+
+        if df_list:
+            logger.info('creating master zoro file ...')
+            df_concat = pd.concat(df_list, ignore_index=True)
+            df_concat.to_excel(ZORO_MASTER)
+        logger.info('uploading master zoro file ...')
+        s3.upload_file(ZORO_MASTER, MASTER_BUCKET, ZORO_MASTER.split('/')[-1])
         
+    def find_missing_or_incomplete_categories(self):
+        retry_cats = []
+        cats = []
+        total_cats = list(range(294))
+        for file in s3.list_objects(Bucket=ZORO_RESULTS_BUCKET)['Contents']:
+            logger.info(f"load old list {file['Key']}")
+            cat = int(os.path.splitext(file['Key'])[0].split('_')[-1])
+            cats.append(cat)
+            obj = s3.get_object(Bucket=ZORO_RESULTS_BUCKET, Key=file['Key'])
+            dd = pd.read_excel(BytesIO(obj.get('Body').read()), sheet_name='Sheet', usecols=['category'])
+            if dd.empty:
+                retry_cats.append(cat)
+        
+        retry_cats += list(set(total_cats) - set(cats))
+
+        print(retry_cats)
 
     def _headers(self):
         return Util().get_zoro_headers()
@@ -257,6 +295,7 @@ if __name__ == '__main__':
     parser.add_argument('-i', '--index', type=str, required=False, help="the name of childscraper. e.g, ganjapreneur from https://www.ganjapreneur.com/businesses/  complete example: python3 dirscraper.py -k ganjapreneur")
 
     script = Script()
+    # script._save_master_excel()
     cat_idx = parser.parse_args().index or 0
     logger.info(f"{cat_idx}st Category scraper")
     ZORO_PATH = BASE_PATH + f'/ZORO_SCRAPE_Category_{cat_idx}.xlsx'
