@@ -4,6 +4,7 @@ venv
 logs/*
 state.json
 *.zip
+*.pyc
 
 info.txt
 
