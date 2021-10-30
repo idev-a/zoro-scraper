@@ -59,6 +59,7 @@ class SgWriter:
         preexisting = path.exists(data_file)
         if preexisting:
             os.remove(data_file)
+            preexisting = False
         self.__zoro_wb = load_workbook(data_file) if preexisting else Workbook()
         self.__writer = self.__zoro_wb.active
         self.__id_str = str(deduper.get_id()) if deduper else None
