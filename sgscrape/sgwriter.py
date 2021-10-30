@@ -3,6 +3,7 @@ import math
 from re import I
 import threading
 from os import path
+import os
 from typing import Optional
 
 from sglogging import SgLogSetup
@@ -13,7 +14,6 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 
 from openpyxl import load_workbook, Workbook
-import boto3
 from util.util import Util
 
 ONE_SHEET_LIMIT = 999999
@@ -57,6 +57,8 @@ class SgWriter:
         self.__s3 = s3
         self.__data_file_name = data_file
         preexisting = path.exists(data_file)
+        if preexisting:
+            os.remove(data_file)
         self.__zoro_wb = load_workbook(data_file) if preexisting else Workbook()
         self.__writer = self.__zoro_wb.active
         self.__id_str = str(deduper.get_id()) if deduper else None
