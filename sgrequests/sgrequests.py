@@ -54,7 +54,7 @@ class SgRequestsBase:
     # ]
 
     STORM_PROXIES = [
-        "http://5.79.73.131:13040",
+        "http://5.79.73.131:13080",
     ]
 
     _IP_ROTATION_MAX_RETRIES = 5

@@ -247,8 +247,8 @@ class Script:
 
                 except Exception as err:
                     time.sleep(1)
-                    logger.warn(link['href'])
-                    logger.warn(str(err))
+                    logger.warning(link['href'])
+                    logger.warning(str(err))
                     pass
             break
 
