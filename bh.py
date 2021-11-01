@@ -262,11 +262,11 @@ class Script:
             cat_url = self._url(link)
             cat = self.request_with_retries(cat_url)
             sub_categories = cat.select('ul.c-sidebar-nav__list li a')
-            for sub_url, sub_cat in self.fetchList(sub_categories):
-            # for sub_link in sub_categories:
+            # for sub_url, sub_cat in self.fetchList(sub_categories):
+            for sub_link in sub_categories:
                 try:
-                    # sub_url = self._url(sub_link)
-                    # sub_cat = self.request_with_retries(sub_url)
+                    sub_url = self._url(sub_link)
+                    sub_cat = self.request_with_retries(sub_url)
                     pages = sub_cat.select('section.search__results__footer div.v-select-list a')
                     items = sub_cat.select('div.search-results__result div.product-card-container')
                     logger.info(f"[{len(items)}] {sub_url}")
