@@ -162,11 +162,10 @@ class Script:
 
 
     def request_with_retries(self, url):
-        with SgRequests(verify_ssl=False) as session:
-            res = session.get(url=url, headers=self._headers())
-            if res.status_code != 200:
-                logger.warning(res.__str__)
-            return bs(res.text, 'lxml')
+        res = http.get(url=url, headers=self._headers())
+        if res.status_code != 200:
+            logger.warning(res.__str__)
+        return bs(res.text, 'lxml')
 
 
     def _check_old_list(self, mf_number):
@@ -286,8 +285,6 @@ class Script:
                                 yield self._d_zoro(item)
                             except Exception as err:
                                 time.sleep(1)
-                                logger.warning(link['href'])
-                                logger.warning(str(err))
 
                         # page 2 > 
                         if len(pages) > 1:
@@ -305,8 +302,6 @@ class Script:
                                         yield self._d_zoro(item1)
                                     except Exception as err:
                                         time.sleep(1)
-                                        logger.warning(link['href'])
-                                        logger.warning(str(err))
 
                     
             else:
@@ -318,8 +313,6 @@ class Script:
                         yield self._d_zoro(item)
                     except Exception as err:
                         time.sleep(1)
-                        logger.warning(link['href'])
-                        logger.warning(str(err))
 
                 # page 2 > 
                 if len(pages1) > 1:
@@ -337,8 +330,6 @@ class Script:
                                 yield self._d_zoro(item1)
                             except Exception as err:
                                 time.sleep(1)
-                                logger.warning(link['href'])
-                                logger.warning(str(err))
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
