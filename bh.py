@@ -264,7 +264,9 @@ class Script:
         logger.info(f"Total {len(categories)} categories")
         # for cat_url, cat in self.fetchList(categories):
         for x, link in enumerate(categories):
-            if x not in cat_list:
+            # if x not in cat_list:
+            #     continue
+            if x != int(cat_idx):
                 continue
             cat_url = self._url(link)
             cat = self.request_with_retries(cat_url)
@@ -330,6 +332,8 @@ if __name__ == '__main__':
     # script._save_master_excel()
     if cat_idx == 'missing':
         script.find_missing_or_incomplete_categories()
+    elif cat_idx == 'list':
+        script.list_zoro_cat()
     elif cat_idx != '-1':
         logger.info(f"{cat_idx}st Category scraper")
         ZORO_PATH = BASE_PATH + f'/ZORO_SCRAPE_Category_{cat_idx}.xlsx'
@@ -339,5 +343,3 @@ if __name__ == '__main__':
             for rec in results:
                 writer.write_row(rec)
     
-    elif cat_idx == 'list':
-        script.list_zoro_cat()
