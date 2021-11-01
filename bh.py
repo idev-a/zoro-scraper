@@ -262,33 +262,57 @@ class Script:
             cat_url = self._url(link)
             cat = self.request_with_retries(cat_url)
             sub_categories = cat.select('ul.c-sidebar-nav__list li a')
-            logger.info(f"{cat_url} [{len(sub_categories)}]")
-            # for sub_url, sub_cat in self.fetchList(sub_categories):
-            for sub_link in sub_categories:
+            logger.info(f"{cat_url} [sub cat {len(sub_categories)}]")
+            if len(sub_categories):
+                # for sub_url, sub_cat in self.fetchList(sub_categories):
+                for sub_link in sub_categories:
+                    try:
+                        sub_url = self._url(sub_link)
+                        sub_cat = self.request_with_retries(sub_url)
+                        pages = sub_cat.select('section.search__results__footer div.v-select-list a')
+                        items = sub_cat.select('div.search-results__result div.product-card-container')
+                        logger.info(f"[{len(items)}] {sub_url}")
+                        for item in items:
+                            yield self._d_zoro(item)
+
+                        # page 2 > 
+                        if len(pages) > 1:
+                            for page in pages:
+                                sub_url1 = sub_url+f'?page={page.text.strip()}'
+                                sub_cat1 = self.request_with_retries(sub_url1)
+                                items1 = sub_cat1.select('div.search-results__result div.product-card-container')
+                                logger.info(f"[{len(items1)}] [{page.text.strip()}]")
+                                for item1 in items1:
+                                    yield self._d_zoro(item1)
+
+                    except Exception as err:
+                        time.sleep(1)
+                        logger.warning(link['href'])
+                        logger.warning(str(err))
+                        pass
+            else:
                 try:
-                    sub_url = self._url(sub_link)
-                    sub_cat = self.request_with_retries(sub_url)
-                    pages = sub_cat.select('section.search__results__footer div.v-select-list a')
-                    items = sub_cat.select('div.search-results__result div.product-card-container')
-                    logger.info(f"[{len(items)}] {sub_url}")
-                    for item in items:
+                    pages1 = cat.select('section.search__results__footer div.v-select-list a')
+                    items2 = cat.select('div.search-results__result div.product-card-container')
+                    logger.info(f"[{len(items2)}] {cat_url}")
+                    for item in items2:
                         yield self._d_zoro(item)
 
                     # page 2 > 
-                    if len(pages) > 1:
-                        for page in pages:
-                            sub_url1 = sub_url+f'?page={page.text.strip()}'
-                            sub_cat1 = self.request_with_retries(sub_url1)
-                            items1 = sub_cat1.select('div.search-results__result div.product-card-container')
-                            logger.info(f"[{len(items1)}] [{page.text.strip()}]")
-                            for item1 in items1:
+                    if len(pages1) > 1:
+                        for page in pages1:
+                            sub_url21 = cat_url+f'?page={page.text.strip()}'
+                            sub_cat21 = self.request_with_retries(sub_url21)
+                            items21 = sub_cat21.select('div.search-results__result div.product-card-container')
+                            logger.info(f"[{len(items21)}] [{page.text.strip()}]")
+                            for item1 in items21:
                                 yield self._d_zoro(item1)
-
                 except Exception as err:
-                    time.sleep(1)
-                    logger.warning(link['href'])
-                    logger.warning(str(err))
-                    pass
+                        time.sleep(1)
+                        logger.warning(link['href'])
+                        logger.warning(str(err))
+                        pass
+
             break
 
 if __name__ == '__main__':
