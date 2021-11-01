@@ -262,6 +262,7 @@ class Script:
             cat_url = self._url(link)
             cat = self.request_with_retries(cat_url)
             sub_categories = cat.select('ul.c-sidebar-nav__list li a')
+            logger.info(f"{cat_url} [{len(sub_categories)}]")
             # for sub_url, sub_cat in self.fetchList(sub_categories):
             for sub_link in sub_categories:
                 try:
