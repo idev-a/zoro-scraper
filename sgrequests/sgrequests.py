@@ -39,25 +39,17 @@ class CriticalSgRequestError(Exception):
 
 
 class SgRequestsBase:
-    DEFAULT_RETRIES = 5
-    DEFAULT_IP_ROTATION_RETRIES_BEHIND_PROXY = 5
+    DEFAULT_RETRIES = 10
+    DEFAULT_IP_ROTATION_RETRIES_BEHIND_PROXY = 10
     DEFAULT_TIMEOUT = Timeout(timeout=61, connect=61)
     DEFAULT_PROXY_URL = "http://groups-RESIDENTIAL,country-us:{}@proxy.apify.com:8000/"
     DEFAULT_DONT_RETRY_STATUS_CODES = frozenset(range(400, 600))
-
-    # STORM_PROXIES = [
-    #     "http://107.150.42.74:17016",
-    #     "http://192.151.156.90:19016",
-    #     "http://207.180.216.144:19008",
-    #     "http://173.208.246.186:19004",
-    #     "http://63.141.236.210:19018",
-    # ]
 
     STORM_PROXIES = [
         "http://5.79.73.131:13080",
     ]
 
-    _IP_ROTATION_MAX_RETRIES = 5
+    _IP_ROTATION_MAX_RETRIES = 10
     __BANNED_IP_SET = set()
     _CONNECTION_RETRIES = 10
     __instance_id = 0

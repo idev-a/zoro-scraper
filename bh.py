@@ -162,10 +162,11 @@ class Script:
 
 
     def request_with_retries(self, url):
-        res = http.get(url=url, headers=self._headers())
-        if res.status_code != 200:
-            logger.warning(res.__str__)
-        return bs(res.text, 'lxml')
+        with SgRequests(verify_ssl=False) as session:
+            res = session.get(url=url, headers=self._headers())
+            if res.status_code != 200:
+                logger.warning(res.__str__)
+            return bs(res.text, 'lxml')
 
 
     def _check_old_list(self, mf_number):
@@ -264,10 +265,10 @@ class Script:
         logger.info(f"Total {len(categories)} categories")
         # for cat_url, cat in self.fetchList(categories):
         for x, link in enumerate(categories):
-            if x not in cat_list:
-                continue
-            # if x != int(cat_idx):
+            # if x not in cat_list:
             #     continue
+            if x != int(cat_idx):
+                continue
             cat_url = self._url(link)
             cat = self.request_with_retries(cat_url)
             sub_categories = cat.select('ul.c-sidebar-nav__list li a')
@@ -275,52 +276,69 @@ class Script:
             if len(sub_categories):
                 for sub_url, sub_cat in self.fetchList(sub_categories):
                 # for sub_link in sub_categories:
-                    try:
                         # sub_url = self._url(sub_link)
                         # sub_cat = self.request_with_retries(sub_url)
                         pages = sub_cat.select('section.search__results__footer div.v-select-list a')
                         items = sub_cat.select('div.search-results__result div.product-card-container')
                         logger.info(f"[{len(items)}] {sub_url}")
                         for item in items:
-                            yield self._d_zoro(item)
+                            try:
+                                yield self._d_zoro(item)
+                            except Exception as err:
+                                time.sleep(1)
+                                logger.warning(link['href'])
+                                logger.warning(str(err))
 
                         # page 2 > 
                         if len(pages) > 1:
                             for page in pages:
                                 sub_url1 = sub_url+f'?page={page.text.strip()}'
-                                sub_cat1 = self.request_with_retries(sub_url1)
+                                try:
+                                    sub_cat1 = self.request_with_retries(sub_url1)
+                                except:
+                                    time.sleep(1)
+                                    continue
                                 items1 = sub_cat1.select('div.search-results__result div.product-card-container')
                                 logger.info(f"[{len(items1)}] ***page*** [{page.text.strip()}]")
                                 for item1 in items1:
-                                    yield self._d_zoro(item1)
+                                    try:
+                                        yield self._d_zoro(item1)
+                                    except Exception as err:
+                                        time.sleep(1)
+                                        logger.warning(link['href'])
+                                        logger.warning(str(err))
 
+                    
+            else:
+                pages1 = cat.select('section.search__results__footer div.v-select-list a')
+                items2 = cat.select('div.search-results__result div.product-card-container')
+                logger.info(f"[{len(items2)}] {cat_url}")
+                for item in items2:
+                    try:
+                        yield self._d_zoro(item)
                     except Exception as err:
                         time.sleep(1)
                         logger.warning(link['href'])
                         logger.warning(str(err))
-                        pass
-            else:
-                try:
-                    pages1 = cat.select('section.search__results__footer div.v-select-list a')
-                    items2 = cat.select('div.search-results__result div.product-card-container')
-                    logger.info(f"[{len(items2)}] {cat_url}")
-                    for item in items2:
-                        yield self._d_zoro(item)
 
-                    # page 2 > 
-                    if len(pages1) > 1:
-                        for page in pages1:
-                            sub_url21 = cat_url+f'?page={page.text.strip()}'
+                # page 2 > 
+                if len(pages1) > 1:
+                    for page in pages1:
+                        sub_url21 = cat_url+f'?page={page.text.strip()}'
+                        try:
                             sub_cat21 = self.request_with_retries(sub_url21)
-                            items21 = sub_cat21.select('div.search-results__result div.product-card-container')
-                            logger.info(f"[{len(items21)}] ***page*** [{page.text.strip()}]")
-                            for item1 in items21:
+                        except:
+                            time.sleep(1)
+                            continue
+                        items21 = sub_cat21.select('div.search-results__result div.product-card-container')
+                        logger.info(f"[{len(items21)}] ***page*** [{page.text.strip()}]")
+                        for item1 in items21:
+                            try:
                                 yield self._d_zoro(item1)
-                except Exception as err:
-                        time.sleep(1)
-                        logger.warning(link['href'])
-                        logger.warning(str(err))
-                        pass
+                            except Exception as err:
+                                time.sleep(1)
+                                logger.warning(link['href'])
+                                logger.warning(str(err))
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
